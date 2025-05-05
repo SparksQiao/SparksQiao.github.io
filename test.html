@@ -1,0 +1,271 @@
+<!-- 测试页 test.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人格测试 - 豫故模联</title>
+    <style>
+        @font-face {
+            font-family: 'Huimin';
+            src: url('汇文明朝体.otf') format('opentype');
+        }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            min-height: 100vh;
+            background: url('Png/bj.png') no-repeat center/cover fixed;
+            padding: 20px;
+            font-family: 'Huimin', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+        .question-card {
+            background: url('Png/bj.png') no-repeat center/cover;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 0 auto;
+            max-width: 600px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            position: relative;
+            overflow: hidden;
+        }
+        .question-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.85);
+            z-index: 0;
+        }
+        .question-content {
+            position: relative;
+            z-index: 1;
+        }
+        .options {
+            display: grid;
+            gap: 12px;
+            margin: 25px 0;
+        }
+        .option-btn {
+            padding: 16px;
+            border: 2px solid #8d5a6b;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+            text-align: left;
+            width: 100%;
+            font-family: 'Huimin', sans-serif;
+        }
+        .option-btn:hover, .option-btn.selected {
+            background: #8d5a6b;
+            color: white;
+            transform: translateY(-2px);
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .nav-btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 10px;
+            background: #8d5a6b;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: 'Huimin', sans-serif;
+        }
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        #progress {
+            font-weight: bold;
+            color: #5a3a44;
+            font-size: 16px;
+            font-family: 'Huimin', sans-serif;
+        }
+        h2 {
+            color: #5a3a44;
+            font-size: 20px;
+            line-height: 1.4;
+            font-family: 'Huimin', sans-serif;
+        }
+        @media (max-width: 480px) {
+            .question-card {
+                padding: 20px;
+            }
+            h2 {
+                font-size: 18px;
+            }
+            .option-btn {
+                padding: 14px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="question-card">
+        <div class="question-content">
+            <h2 id="questionText"></h2>
+            <div class="options" id="options"></div>
+            <div class="nav-buttons">
+                <button class="nav-btn" onclick="prevQuestion()" disabled>← 上一题</button>
+                <span id="progress">1/6</span>
+                <button class="nav-btn" onclick="nextQuestion()" id="nextBtn" disabled>下一题 →</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentQuestion = 0;
+        const answers = [];
+        const questions = [
+            {
+                text: "您的性别是？",
+                options: [
+                    { text: "A. 男", value: "M" },
+                    { text: "B. 女", value: "F" }
+                ]
+            },
+            {
+                text: "你会因为什么原因选择参加模联会议？",
+                options: [
+                    { text: "A. 这个联动议题好有意思！我要去参与！", value: "type4" },
+                    { text: "B. omg茶歇看起来好好吃", value: "type1" },
+                    { text: "C. 我朋友参加了我要做他的双代搭子", value: "type1" },
+                    { text: "D. 我要做努力提升自己的卷王", value: "type4" }
+                ]
+            },
+            {
+                text: "在报名一场模拟联合国会议后，你最关注的点是？",
+                options: [
+                    { text: "A. 写学测！看BG！听学培！查资料！", value: "type4" },
+                    { text: "B. 查看社交晚会指南，准备在社交晚会现场惊艳四方", value: "type3" },
+                    { text: "C. 在交流群潜水看大家水群，乖巧等待会议开幕", value: "type2" },
+                    { text: "D. 朋友圈文案：谁和我一起去参加豫故模联/求时光快进到豫故开幕", value: "type1" }
+                ]
+            },
+            {
+                text: "在开会过程中，你会选择？",
+                options: [
+                    { text: "A. 抢下麦克风：大家都来我这里一起磋商呀！", value: "type1" },
+                    { text: "B. 时刻保持会议记录，会后一小时内交出工作文件绝不拖延的king", value: "type4" },
+                    { text: "C. 优雅斡旋，有条理地提出自己观点的xxwjg", value: "type3" },
+                    { text: "D. 默默倾听，深思熟虑，在适当时候提出自己的观点", value: "type2" }
+                ]
+            },
+            {
+                text: "社交晚会晚上，你会选择？",
+                options: [
+                    { text: "A. 在游园会小游戏中大杀四方，与每一个认识的朋友拍照打卡留念", value: "type1" },
+                    { text: "B. 在晚会现场唱跳俱佳，集体节目个人节目都有你的身影", value: "type3" },
+                    { text: "C. 坐在SE门口地毯上爆肝DR，一不小心还中了SE的一等奖", value: "type4" },
+                    { text: "D. 偷偷在摄影师镜头里比耶，坐在场下安静观看节目", value: "type2" }
+                ]
+            },
+            {
+                text: "在会议结束后，你最珍贵的回忆是？",
+                options: [
+                    { text: "A. 吃过的小蛋糕和唱过的歌", value: "type3" },
+                    { text: "B. 在朋友圈留下小作文和九图并获得新加的100个模联朋友的点赞", value: "type1" },
+                    { text: "C. 获得会场奖项对自己的付出有所交代", value: "type4" },
+                    { text: "D. 享受会场上发言后的成就感，在独处时也会怀念认识的好朋友", value: "type2" }
+                ]
+            }
+        ];
+
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            document.getElementById('questionText').textContent = question.text;
+            
+            const optionsDiv = document.getElementById('options');
+            optionsDiv.innerHTML = question.options.map(opt => `
+                <button class="option-btn" onclick="selectOption('${opt.value}')">${opt.text}</button>
+            `).join('');
+            
+            document.getElementById('progress').textContent = `${currentQuestion + 1}/${questions.length}`;
+            
+            // 更新导航按钮状态
+            document.querySelector('[onclick="prevQuestion()"]').disabled = currentQuestion === 0;
+            document.getElementById('nextBtn').disabled = !answers[currentQuestion];
+            
+            // 恢复已选答案的样式
+            if(answers[currentQuestion]) {
+                document.querySelectorAll('.option-btn').forEach(btn => {
+                    if(btn.textContent.includes(answers[currentQuestion])) {
+                        btn.classList.add('selected');
+                    }
+                });
+            }
+        }
+
+        function selectOption(value) {
+            answers[currentQuestion] = value;
+            document.querySelectorAll('.option-btn').forEach(btn => {
+                btn.classList.remove('selected');
+                if(btn.textContent.includes(value)) {
+                    btn.classList.add('selected');
+                }
+            });
+            document.getElementById('nextBtn').disabled = false;
+            
+            // 自动跳转到下一题（最后一题除外）
+            if(currentQuestion < questions.length - 1) {
+                setTimeout(() => {
+                    nextQuestion();
+                }, 300);
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestion > 0) {
+                currentQuestion--;
+                showQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestion < questions.length - 1) {
+                if (!answers[currentQuestion]) return;
+                currentQuestion++;
+                showQuestion();
+            } else {
+                calculateResult();
+            }
+        }
+
+        function calculateResult() {
+            const gender = answers[0];
+            const typeCounts = { type1:0, type2:0, type3:0, type4:0 };
+            
+            for(let i=1; i<answers.length; i++) {
+                const answer = answers[i];
+                if(answer && answer.startsWith('type')) {
+                    typeCounts[answer]++;
+                }
+            }
+            
+            const maxCount = Math.max(...Object.values(typeCounts));
+            const resultTypes = Object.keys(typeCounts).filter(k => typeCounts[k] === maxCount);
+            const priority = ['type4', 'type3', 'type2', 'type1'];
+            const resultType = resultTypes.reduce((a, b) => 
+                priority.indexOf(a) < priority.indexOf(b) ? a : b
+            );
+
+            window.location.href = `result.html?type=${resultType}&gender=${gender}`;
+        }
+
+        showQuestion();
+    </script>
+</body>
+</html>
